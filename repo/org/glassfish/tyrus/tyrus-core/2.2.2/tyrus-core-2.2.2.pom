@@ -1,0 +1,252 @@
+<!--
+
+    Copyright (c) 2011, 2025 Oracle and/or its affiliates. All rights reserved.
+
+    This program and the accompanying materials are made available under the
+    terms of the Eclipse Public License v. 2.0, which is available at
+    http://www.eclipse.org/legal/epl-2.0.
+
+    This Source Code may also be made available under the following Secondary
+    Licenses when the conditions for such availability set forth in the
+    Eclipse Public License v. 2.0 are satisfied: GNU General Public License,
+    version 2 with the GNU Classpath Exception, which is available at
+    https://www.gnu.org/software/classpath/license.html.
+
+    SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
+
+-->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <parent>
+        <groupId>org.glassfish.tyrus</groupId>
+        <artifactId>tyrus-project</artifactId>
+        <version>2.2.2</version>
+    </parent>
+
+    <modelVersion>4.0.0</modelVersion>
+    <artifactId>tyrus-core</artifactId>
+    <packaging>bundle</packaging>
+    <name>Tyrus Core</name>
+
+    <build>
+        <resources>
+            <resource>
+                <directory>${basedir}/src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+
+        <plugins>
+            <plugin>
+                <groupId>com.sun.istack</groupId>
+                <artifactId>maven-istack-commons-plugin</artifactId>
+                <inherited>true</inherited>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <inherited>true</inherited>
+                <executions>
+                    <execution>
+                        <id>add.java20-</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>src/main/java20-</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <inherited>true</inherited>
+                <extensions>true</extensions>
+                <configuration>
+                    <instructions>
+                        <Export-Package>
+                            org.glassfish.tyrus.core.*;version=${project.version},org.glassfish.tyrus.core.extension.*;version=${project.version},org.glassfish.tyrus.core.cluster.*;version=${project.version},org.glassfish.tyrus.core.coder.*;version=${project.version},org.glassfish.tyrus.core.frame.*;version=${project.version},org.glassfish.tyrus.core.wsadl.model.*;version=${project.version}
+                        </Export-Package>
+                        <Import-Package>
+<!--                            jakarta.websocket;version=${apijar.bundle.version},-->
+<!--                            jakarta.websocket.server;version=${apijar.bundle.version},-->
+                            jakarta.xml.bind.*;version="[3.0,5)",
+                            org.osgi.framework.*;version="!",
+                            javax.naming,*
+                        </Import-Package>
+                        <Multi-Release>true</Multi-Release>
+                        <_noimportjava>true</_noimportjava>
+                        <Require-Capability>osgi.ee;filter:="(&amp;(osgi.ee=JavaSE)(version=11))"</Require-Capability>
+                    </instructions>
+                    <unpackBundle>true</unpackBundle>
+                    <excludeDependencies>org.osgi.core</excludeDependencies>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>com.sun.tools.xjc.maven2</groupId>
+                <artifactId>maven-jaxb-plugin</artifactId>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.sun.xml.bind</groupId>
+                        <artifactId>jaxb-xjc</artifactId>
+                        <version>${jaxb.ri.version}</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>com.sun.xml.bind</groupId>
+                        <artifactId>jaxb-osgi</artifactId>
+                        <version>${jaxb.ri.version}</version>
+                    </dependency>
+                </dependencies>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <generatePackage>org.glassfish.tyrus.core.wsadl.model</generatePackage>
+                    <catalog>${basedir}/etc/catalog.xml</catalog>
+                    <schemaDirectory>${basedir}/etc</schemaDirectory>
+                    <includeSchemas>
+                        <includeSchema>wsadl.xsd</includeSchema>
+                    </includeSchemas>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.glassfish.tyrus.tools.plugins</groupId>
+                <artifactId>tyrus-jar-updater</artifactId>
+                <version>1.0.0</version>
+                <executions>
+                    <execution>
+                        <id>copyJdk21Classes</id>
+                        <phase>pre-integration-test</phase>
+                        <goals><goal>update</goal></goals>
+                        <configuration>
+                            <jar>${project.build.directory}/${project.build.finalName}.jar</jar>
+                            <files>
+                                <file>${java21.build.outputDirectory}</file>
+                            </files>
+                            <ignoreOnError>true</ignoreOnError>
+                            <dest>META-INF/versions/21/org/glassfish/tyrus/core/virtual</dest>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copyJdk21Sources</id>
+                        <phase>pre-integration-test</phase>
+                        <goals><goal>update</goal></goals>
+                        <configuration>
+                            <jar>${project.build.directory}/${project.build.finalName}-sources.jar</jar>
+                            <files>
+                                <file>${java21.sourceDirectory}</file>
+                            </files>
+                            <ignoreOnError>true</ignoreOnError>
+                            <dest>META-INF/versions/21/org/glassfish/tyrus/core/virtual</dest>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+    <dependencies>
+        <dependency>
+            <groupId>org.glassfish.tyrus</groupId>
+            <artifactId>tyrus-spi</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.xml.bind</groupId>
+            <artifactId>jakarta.xml.bind-api</artifactId>
+            <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>jakarta.activation</groupId>
+                    <artifactId>jakarta.activation-api</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.activation</groupId>
+            <artifactId>jakarta.activation-api</artifactId>
+            <version>${activation.api.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.sun.xml.bind</groupId>
+            <artifactId>jaxb-osgi</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.core</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <profiles>
+        <profile>
+            <id>build.jdk21</id>
+            <activation>
+                <jdk>[21,)</jdk>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-clean-plugin</artifactId>
+                        <configuration>
+                            <filesets>
+                                <fileset>
+                                    <directory>${java21.build.outputDirectory}</directory>
+                                </fileset>
+                            </filesets>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <phase>test-compile</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <target>
+                                        <echo>Building for JDK 21+</echo>
+                                    </target>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>compile-java21</id>
+                                <phase>test-compile</phase>
+                                <configuration>
+                                    <target>
+                                        <mkdir dir="${java21.build.outputDirectory}" />
+                                        <javac srcdir="${java21.sourceDirectory}${path.separator}${project.basedir}/src/main/java/org/glassfish/tyrus/core/virtual" destdir="${java21.build.outputDirectory}"
+                                               classpath="${project.build.outputDirectory}" includeantruntime="false" release="21"/>
+                                    </target>
+                                </configuration>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
+    <properties>
+        <java21.build.outputDirectory>${project.basedir}/target21</java21.build.outputDirectory>
+        <java21.sourceDirectory>${project.basedir}/src/main/java21</java21.sourceDirectory>
+    </properties>
+</project>
