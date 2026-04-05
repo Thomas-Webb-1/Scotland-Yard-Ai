@@ -21,7 +21,7 @@ public class MrXOneStepLookahead implements Ai {
 		res += totalDetectiveDistances(board, move) * 10;
 
 		// if Mr X can move around more, this is a positive.
-		res += Math.toIntExact(board.getSetup().graph.adjacentNodes(getMoveDestination(move)).stream()
+		res += Math.toIntExact(board.getSetup().graph.adjacentNodes(moveDestination(move)).stream()
 				.filter(n -> !detectiveLocations(board).containsValue(n))
 				.count()) * 5;
 
