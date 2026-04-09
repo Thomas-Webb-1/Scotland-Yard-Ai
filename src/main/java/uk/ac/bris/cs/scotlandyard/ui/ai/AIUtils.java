@@ -1,11 +1,14 @@
 package uk.ac.bris.cs.scotlandyard.ui.ai;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.graph.ImmutableValueGraph;
 
+import com.sun.scenario.effect.Identity;
 import jakarta.annotation.Nonnull;
+import org.jspecify.annotations.NonNull;
 import uk.ac.bris.cs.scotlandyard.model.*;
 
 import java.util.*;
@@ -13,9 +16,6 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static uk.ac.bris.cs.scotlandyard.model.ScotlandYard.Ticket.DOUBLE;
-import static uk.ac.bris.cs.scotlandyard.model.ScotlandYard.Ticket.SECRET;
 
 public final class AIUtils {
     // Prevents instantiation
@@ -162,7 +162,7 @@ public final class AIUtils {
                 .anyMatch(n -> detectiveLocations(board).containsValue(n));
     }
 
-    public static Board generateBoardFromMove(Board board, Move move) {
+    public static Board generateBoardFromMoves(Board board, ImmutableSet<Move> moves) {
         return new ImmutableBoard(
                 board.getSetup(),
                 detectiveLocations(board),
@@ -170,7 +170,7 @@ public final class AIUtils {
                 board.getMrXTravelLog(), // TODO: need to implement this
                 board.getWinner(),
                 board.getAvailableMoves()
-                );
+        );
     }
 
     public static ImmutableSet<Move.SingleMove> makeSingleMoves(@Nonnull Board board, Piece piece, Integer source) {
@@ -221,44 +221,83 @@ public final class AIUtils {
                 .collect(ImmutableSet.toImmutableSet());
     }
 
-    public static ImmutableSet<List<Move>> detectiveMoveCartesianProduct(@Nonnull Board board) {
-        return ImmutableSet.copyOf(
-                board.getPlayers().stream()
-                        .filter(Piece::isDetective)
-                        .map(p -> (Piece.Detective) p)
-                        .map(d -> getPieceAvailableMoves(board, d, board.getDetectiveLocation(d).get()))
-                        .reduce(
-                                List.of(List.of()),
-                                (c, l) -> c.stream()
-                                        .flatMap(combo -> l.stream()
-                                                .map(item -> {
-                                                    List<Move> newList = new ArrayList<>(combo);
-                                                    newList.add(item);
-                                                    return newList;
-                                                }))
-                                        .collect(Collectors.toList()),
-                                (a, b) -> {
-                                    List<List<Move>> res = new ArrayList<>(a);
-                                    res.addAll(b);
-                                    return res;
-                                }
-                        ));
+    public static ImmutableSet<ImmutableSet<Move>> detectiveMoveCartesianProduct(@Nonnull Board board) {
+        List<List<Move>> combinations = board.getPlayers().stream()
+                .filter(Piece::isDetective)
+                .map(p -> (Piece.Detective) p)
+                .map(d -> getPieceAvailableMoves(board, d, board.getDetectiveLocation(d).get()))
+                .reduce(
+                        List.of(List.of()),
+                        (c, l) -> c.stream()
+                                .flatMap(combo -> l.stream()
+                                        .map(item -> {
+                                            List<Move> newList = new ArrayList<>(combo);
+                                            newList.add(item);
+                                            return newList;
+                                        }))
+                                .collect(Collectors.toList()),
+                        (a, b) -> {
+                            List<List<Move>> res = new ArrayList<>(a);
+                            res.addAll(b);
+                            return res;
+                        }
+                );
+        // filter out scenarios where 2 detectives end up on the same location.
+        return combinations.stream()
+                .filter(ml ->
+                        ml.stream().count() == ml.stream().map(AIUtils::moveDestination).distinct().count())
+                .map(ml -> ImmutableSet.copyOf(ml))
+                .collect(ImmutableSet.toImmutableSet());
     }
 
-    //public static boolean mrXAvailableMoves(Board board, Move move) {
-    //    // find the destination of the move
-    //    // find all the adjacent nodes
-    //    // ensure detectives aren't at these locations
-    //    // ensure you have the correct ticket to move there
-    //    Integer dest = moveDestination(move);
-    //    ImmutableValueGraph<Integer, ImmutableSet<ScotlandYard.Transport>> graph = board.getSetup().graph;
-    //    return graph.adjacentNodes(moveDestination(move)).stream()
-    //            .filter(n -> !detectiveLocations(board).containsValue(n))
-    //            .filter(n ->
-    //                    graph.edgeValue(dest, n).get().stream()
-    //                            .anyMatch(transport ->
-    //                                    board.getPlayerTickets(move.commencedBy()).get().getCount(transport.requiredTicket()) > 0));
-    //    //board.getPlayerTickets(move.commencedBy()).orElseThrow().getCount(graph.edgeValue(dest, n).orElseThrow()));
-    //}
-}
+    public static ImmutableSet<ImmutableMap<Piece.Detective, Integer>> potentialDetectiveLocations(@Nonnull Board board) {
+        List<List<Move>> combinations = board.getPlayers().stream()
+                .filter(Piece::isDetective)
+                .map(p -> (Piece.Detective) p)
+                .map(d -> getPieceAvailableMoves(board, d, board.getDetectiveLocation(d).get()))
+                .reduce(
+                        List.of(List.of()),
+                        (c, l) -> c.stream()
+                                .flatMap(combo -> l.stream()
+                                        .map(item -> {
+                                            List<Move> newList = new ArrayList<>(combo);
+                                            newList.add(item);
+                                            return newList;
+                                        }))
+                                .collect(Collectors.toList()),
+                        (a, b) -> {
+                            List<List<Move>> res = new ArrayList<>(a);
+                            res.addAll(b);
+                            return res;
+                        }
+                );
+        // filter out scenarios where 2 detectives end up on the same location.
+        List<List<Move>> moveSets = combinations.stream()
+                .filter(ml ->
+                        ml.stream().count() == ml.stream().map(AIUtils::moveDestination).distinct().count())
+                .collect(Collectors.toList());
 
+        return moveSets.stream()
+                .map(ms -> {
+                    List<Move> newList = ms;
+                    return newList.stream()
+                            .collect(ImmutableMap.toImmutableMap(
+                                    m -> (Piece.Detective) m.commencedBy(),
+                                    m -> moveDestination(m)
+                            ));
+                })
+                .collect(ImmutableSet.toImmutableSet());
+    }
+
+    public static ImmutableMap<Piece, ImmutableMap<ScotlandYard.Ticket, Integer>> getTicketsFromBoard(Board board) {
+        return board.getPlayers().stream()
+                .collect(ImmutableMap.toImmutableMap(
+                        p -> p,
+                        p -> Arrays.stream(ScotlandYard.Ticket.values())
+                                .collect(ImmutableMap.toImmutableMap(
+                                        t -> t,
+                                        t -> board.getPlayerTickets(p).orElse(_ -> 0).getCount(t)
+                                ))
+                ));
+    }
+}
