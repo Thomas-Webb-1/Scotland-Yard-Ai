@@ -4,8 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import uk.ac.bris.cs.scotlandyard.model.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import static uk.ac.bris.cs.scotlandyard.ui.ai.Team.*;
 
@@ -79,15 +78,50 @@ public class GameTree {
     List<GameTree> getChildren() {
         //Lazy load child nodes
         if (children.isEmpty() && state.getWinner().isEmpty()) {
-            children = state.getAvailableMoves().stream().map(
-                    move -> new GameTree(state.advance(move), move)
-            ).toList();
+            children = expandFullTurn(state);
         }
         return children;
     }
 
+    private List<GameTree> expandFullTurn(Board.GameState initialState) {
+        if (isMrXTurn()){
+            List<GameTree> result = new ArrayList<>();
+            for (Move move : initialState.getAvailableMoves()) {
+                result.add(new GameTree(initialState.advance(move), move));
+            }
+            return result;
+        } else {
+
+
+            Deque<Board.GameState> queue = new ArrayDeque<>(initialState.getAvailableMoves().stream().map(initialState::advance).toList());
+            List<GameTree> result = new ArrayList<>();
+            Set<Set<Move>> moveSetSet = new HashSet<>();
+            while (!queue.isEmpty()){
+                var s = queue.pollFirst();
+                if (!s.getWinner().isEmpty() || s.getAvailableMoves().stream().findFirst().orElseThrow().commencedBy().isMrX()){
+                    result.add(new GameTree(s));
+                } else {
+                    for (var move : s.getAvailableMoves()){
+                        queue.add(s.advance(move));
+                    }
+                }
+
+            }
+            return result;
+        }
+    }
+
+    public boolean isMrXTurn() {
+        return getState().getAvailableMoves().stream()
+                .findFirst()
+                .map(m -> m.commencedBy().isMrX())
+                .orElse(false);
+    }
+
     void free() {
-        this.children = null;
+        if (children != null) {
+            children.clear();
+        }
     }
 
     Team getWinner(){
@@ -99,5 +133,4 @@ public class GameTree {
     <T> T accept(GameTreeVisitor<T> visitor) {
         return visitor.visit(this);
     }
-
 }
