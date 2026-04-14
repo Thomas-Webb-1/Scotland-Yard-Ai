@@ -1,6 +1,10 @@
 package uk.ac.bris.cs.scotlandyard.ui.ai;
 
+import uk.ac.bris.cs.scotlandyard.model.Board;
+import uk.ac.bris.cs.scotlandyard.model.Piece;
 import uk.ac.bris.cs.scotlandyard.model.ScotlandYard;
+
+import java.util.List;
 
 public class FastGameState {
     private final int mrX;
@@ -10,7 +14,7 @@ public class FastGameState {
     private byte flags;
     private final MoveStore store;
 
-    FastGameState(int mrX, int[] detectives, byte turns, MoveStore store, boolean mrXTurn,boolean doubleMoveContinuation) {
+    private FastGameState(int mrX, int[] detectives, byte turns, MoveStore store, boolean mrXTurn,boolean doubleMoveContinuation) {
         this.mrX = mrX;
         this.detectives = detectives;
         this.turns = turns;
@@ -30,9 +34,9 @@ public class FastGameState {
                 this.moves = 0;
                 return;
             }
-            flags |= 0x01;
+            flags |= 0x01;// mrX turn flag
             if (doubleMoveContinuation){
-                flags |= 0x02;
+                flags |= 0x02;//state is a continuation of a double moves
             }
             this.moves = store.getMrXMoves(mrX) * (!doubleMoveContinuation && StateUtils.playerHasTicket(mrX, ScotlandYard.Ticket.DOUBLE) ? 2 : 1);
         } else {
@@ -72,7 +76,7 @@ public class FastGameState {
             if (isDoubleAvailable && (move % 2) == 1){
                 return new FastGameState(
                          StateUtils.playerUseTicket(newMrX, ScotlandYard.Ticket.DOUBLE),
-                        detectives,//detectives.clone(),
+                        detectives.clone(),
                         (byte) (turns - 1),
                         store,
                         true,
@@ -81,7 +85,7 @@ public class FastGameState {
             } else {
                 return new FastGameState(
                         newMrX,
-                        detectives,//detectives.clone(),
+                        detectives.clone(),
                         (byte) (turns - 1),
                         store,
                         false,
@@ -143,6 +147,35 @@ public class FastGameState {
 
     public Team getWinner() {
         return StateUtils.getWinner(flags);
+    }
+
+    public static FastGameState stateFromBoard(Board board){
+        return FastGameState.stateFromBoard(board, new MoveStore(board.getSetup().graph));
+    }
+
+    public static FastGameState stateFromBoard(Board board, MoveStore moveStore) {
+        //utility function to convert a board to a FastGameState with a precomputed move store
+
+        var mrXTickets = board.getPlayerTickets(Piece.MrX.MRX).orElseThrow();
+        int mrXLocation = board.getAvailableMoves().stream().findFirst().orElseThrow().source() - 1;
+        int mrX = StateUtils.buildMrX(mrXLocation, mrXTickets.getCount(ScotlandYard.Ticket.TAXI), mrXTickets.getCount(ScotlandYard.Ticket.BUS), mrXTickets.getCount(ScotlandYard.Ticket.UNDERGROUND),
+                mrXTickets.getCount(ScotlandYard.Ticket.SECRET),
+                mrXTickets.getCount(ScotlandYard.Ticket.DOUBLE));
+
+        List<Piece> boardDetectives = board.getPlayers().stream().filter(Piece::isDetective).toList();
+        int[] detectives = new int[boardDetectives.size()];
+        for (int i = 0; i < boardDetectives.size(); i++) {
+            Piece d = boardDetectives.get(i);
+            var tickets = board.getPlayerTickets(d).orElseThrow();
+            int location = board.getDetectiveLocation((Piece.Detective) d).orElseThrow() - 1;
+            detectives[i] = StateUtils.buildDetective(location,
+                    tickets.getCount(ScotlandYard.Ticket.TAXI),
+                    tickets.getCount(ScotlandYard.Ticket.BUS),
+                    tickets.getCount(ScotlandYard.Ticket.UNDERGROUND));
+        }
+
+        int remainingMoves = board.getSetup().moves.size() - board.getMrXTravelLog().size();
+        return new FastGameState(mrX, detectives, (byte) remainingMoves, moveStore, true, false);
     }
 
 }

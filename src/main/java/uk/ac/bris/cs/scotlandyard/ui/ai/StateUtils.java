@@ -153,31 +153,4 @@ public class StateUtils {
 
         throw new IllegalArgumentException("no ticket count decreased between states");
     }
-
-    static FastGameState stateFromBoard(Board board, MoveStore moveStore) {
-        //utility function to convert a board to a gamestate with a precomputed move store
-
-        var mrXTickets = board.getPlayerTickets(Piece.MrX.MRX).orElseThrow();
-        int mrXLocation = board.getAvailableMoves().stream().findFirst().orElseThrow().source() - 1;
-        int mrX = StateUtils.buildMrX(mrXLocation, mrXTickets.getCount(ScotlandYard.Ticket.TAXI), mrXTickets.getCount(ScotlandYard.Ticket.BUS), mrXTickets.getCount(ScotlandYard.Ticket.UNDERGROUND),
-                mrXTickets.getCount(ScotlandYard.Ticket.SECRET),
-                mrXTickets.getCount(ScotlandYard.Ticket.DOUBLE));
-
-        List<Piece> boardDetectives = board.getPlayers().stream().filter(Piece::isDetective).toList();
-        int[] detectives = new int[boardDetectives.size()];
-        for (int i = 0; i < boardDetectives.size(); i++) {
-            Piece d = boardDetectives.get(i);
-            var tickets = board.getPlayerTickets(d).orElseThrow();
-            int location = board.getDetectiveLocation((Piece.Detective) d).orElseThrow() - 1;
-            detectives[i] = StateUtils.buildDetective(location,
-                    tickets.getCount(ScotlandYard.Ticket.TAXI),
-                    tickets.getCount(ScotlandYard.Ticket.BUS),
-                    tickets.getCount(ScotlandYard.Ticket.UNDERGROUND));
-        }
-
-        int remainingMoves = board.getSetup().moves.size() - board.getMrXTravelLog().size();
-        return new FastGameState(mrX, detectives, (byte) remainingMoves, moveStore, true, false);
-    }
-
-
 }
