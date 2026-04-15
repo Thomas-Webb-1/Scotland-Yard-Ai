@@ -78,7 +78,7 @@ public class OneStepLookahead implements Ai {
 			this.distancesFromMrX = ImmutableMap.copyOf(dijkstra(graph, mrXLocation));
 			this.mrXTurn = mrXTurn;
 			// don't calculate the amount of moves left
-			this.winner = detectives.values().contains(mrXLocation) ? ImmutableSet.of(Piece.MrX.MRX) : ImmutableSet.of();
+			this.winner = detectives.values().contains(mrXLocation) ? getDetectivesSet() : ImmutableSet.of();
 		}
 
 		public MyBoard(Board board) {
@@ -121,6 +121,10 @@ public class OneStepLookahead implements Ai {
 			return detectives;
 		}
 
+		public ImmutableSet<Piece> getDetectivesSet() {
+			return detectives.keySet().stream().map(d -> (Piece) d).collect(ImmutableSet.toImmutableSet());
+		}
+
 		public Integer getMrXLocation() {
 			return mrXLocation;
 		}
@@ -138,22 +142,24 @@ public class OneStepLookahead implements Ai {
 			// if a detective is on Mr. X, lose a lot of score.
 			if (detectives.containsValue(mrXLocation)) score -= 100000;
 
-			for (Integer d : detectives.values()) {
+			ImmutableMap<Piece.Detective, Integer> distancesFromDetectives = detectives.entrySet().stream()
+					.collect(ImmutableMap.toImmutableMap(
+                            Map.Entry::getKey,
+							e -> Objects.requireNonNull(distancesFromMrX.get(e.getValue()))
+					));
+
+			// if a detective is nearby, reduce score.
+			if (distancesFromDetectives.containsValue(1)) score -= 10000;
+			if (distancesFromDetectives.containsValue(2)) score -= 1000;
+			if (distancesFromDetectives.containsValue(3)) score -= 100;
+
+			for (Integer d : distancesFromDetectives.values()) {
 				// Mr. X gets more score the further away he is in total to all detectives.
-				score += distancesFromMrX.get(d) * 10;
-				for (Integer adj1 : graph.adjacentNodes(mrXLocation)) {
-					// for each detective that is adjacent to Mr. X, lose 10000 score.
-					if (d.equals(adj1)) score -= 10000;
-					// choose moves that gives Mr. X more freedom to move.
-					score += 10;
-					for (Integer adj2 : graph.adjacentNodes(adj1)) {
-						// for each detective that is adjacent to a node that is adjacent to Mr. X, lose 1000 score.
-						if (d.equals(adj2)) score -= 1000;
-						// choose moves that gives Mr. X more freedom to move.
-						score += 10;
-					}
-				}
+				score += d * 10;
 			}
+
+			// if Mr. x has more freedom to move, increase score.
+			score += graph.adjacentNodes(mrXLocation).size() * 10;
 			return score;
 		}
 	}
