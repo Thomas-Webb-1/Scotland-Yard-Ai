@@ -66,21 +66,6 @@ public class OneStepLookahead implements Ai {
 		private boolean mrXTurn;
 		private ImmutableSet<Piece> winner;
 
-		public MyBoard(
-				ImmutableValueGraph<Integer, ImmutableSet<ScotlandYard.Transport>> graph,
-				ImmutableMap<Piece.Detective, Integer> detectives,
-				Integer mrXLocation,
-				boolean mrXTurn
-		) {
-			this.graph = graph;
-			this.detectives = detectives;
-			this.mrXLocation = mrXLocation;
-			this.distancesFromMrX = ImmutableMap.copyOf(dijkstra(graph, mrXLocation));
-			this.mrXTurn = mrXTurn;
-			// don't calculate the amount of moves left
-			this.winner = detectives.values().contains(mrXLocation) ? getDetectivesSet() : ImmutableSet.of();
-		}
-
 		public MyBoard(Board board) {
 			this.graph = board.getSetup().graph;
 			this.detectives = board.getPlayers().stream()

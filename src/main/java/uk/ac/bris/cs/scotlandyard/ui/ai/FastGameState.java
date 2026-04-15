@@ -179,4 +179,3 @@ public class FastGameState {
     }
 
 }
-enum Team {MRX, DETECTIVES};
