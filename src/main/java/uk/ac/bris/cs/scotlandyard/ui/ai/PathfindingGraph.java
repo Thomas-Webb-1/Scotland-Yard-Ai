@@ -83,12 +83,12 @@ import java.util.Set;
         }
 
         //returns the distance between two nodes
-        public Integer getDistance(@NonNull Integer source, @NonNull Integer destination){
+        public int getDistance(int source,  int destination){
             return distances[source-1][destination-1];
         };
 
 
-        public float getCentrality(@NonNull Integer node){
+        public float getCentrality(int node){
             return centrality[node-1];
         }
 
