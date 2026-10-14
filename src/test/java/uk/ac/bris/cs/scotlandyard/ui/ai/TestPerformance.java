@@ -51,7 +51,7 @@ public class TestPerformance {
     @Test
     public void testMiniMax() throws IOException {
 
-        MiniMiniMax ai = new MiniMiniMax();
+        MiniMax ai = new MiniMax();
 
 
         long start = System.nanoTime();

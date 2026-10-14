@@ -14,7 +14,7 @@ public class FastGameState {
     private byte flags;
     private final MoveStore store;
 
-    private FastGameState(int mrX, int[] detectives, byte turns, MoveStore store, boolean mrXTurn,boolean doubleMoveContinuation) {
+    FastGameState(int mrX, int[] detectives, byte turns, MoveStore store, boolean mrXTurn, boolean doubleMoveContinuation) {
         this.mrX = mrX;
         this.detectives = detectives;
         this.turns = turns;
