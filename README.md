@@ -2,7 +2,7 @@
 
 An adversarial game-playing AI developed to play as **Mr. X** in the board game *Scotland Yard* ([official rules PDF](https://desktopgames.com.ua/games/199/scotlandyard_rules_en.pdf)), implemented in Java.
 
-This project was developed in collaboration with [Yuma Bannerman](https://github.com/yyuuma) as part of the 2nd-year Computer Science curriculum at the **University of Bristol**.
+This project was developed in collaboration with [Yuma Bannerman](https://github.com/yyuuma) as part of the 1st-year Computer Science curriculum at the **University of Bristol**.
 
 ---
 
