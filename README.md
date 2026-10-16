@@ -1,8 +1,8 @@
-# Scotland Yard AI Agent
+# Scotland Yard AI
 
 An adversarial game-playing AI developed to play as **Mr. X** in the board game *Scotland Yard* ([official rules PDF](https://desktopgames.com.ua/games/199/scotlandyard_rules_en.pdf)), implemented in Java.
 
-This project was developed in collaboration with [Yuma Bannerman](https://github.com/yyuuma) as part of the 1st-year Computer Science curriculum at the **University of Bristol**.
+This project was developed in collaboration with [Yuma](https://github.com/yyuuma) as part of the 1st-year Computer Science curriculum at the **University of Bristol**.
 
 ---
 
@@ -10,7 +10,7 @@ This project was developed in collaboration with [Yuma Bannerman](https://github
 
 The agent operates in a real-time, adversarial environment where Mr. X must evade up to 5 detectives across the London transit network (taxi, bus, underground, and river routes).
 
-- **Iterative Deepening Minimax with $\alpha$-$\beta$ Pruning:**
+- **Iterative Deepening Minimax with α-β Pruning:**
   Game trees are explored using iterative deepening bounded by a dynamic time deadline per turn (`deadline = System.currentTimeMillis() + ...`). This guarantees the agent always returns the highest-quality move found even under strict timeout constraints.
 
 - **Graph Precomputation (`PathfindingGraph`):**
@@ -64,4 +64,4 @@ src/
 
 - **Coursework Context:** University of Bristol, School of Computer Science.
 - **Game Framework:** The game rules, GUI, test harness and provided tests are proprietary to the University of Bristol.
-- **AI Implementation:** All search algorithms, bit-packed state representations, pathfinding utilities, heuristics, and custom unit tests were co-authored by **Thomas Webb** and **Yuma Bannerman**.
+- **AI Implementation:** All search algorithms, bit-packed state representations, pathfinding utilities, heuristics, and custom unit tests were co-authored by **Thomas Webb** and **Yuma**.
